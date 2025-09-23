@@ -10,7 +10,10 @@
     "jsx": "preserve",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+    "@/*": ["./*"]
+    }
   },
-  "include": ["app", "lib", "next-env.d.ts"]
+  "include": ["app","**/*.ts","**/*.tsx", "lib", "next-env.d.ts"]
 }
