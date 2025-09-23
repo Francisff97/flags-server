@@ -1,44 +1,35 @@
-import { kv } from '@vercel/kv';
+// lib/kv.ts
+import { kv as vercelKv } from "@vercel/kv";
+import { hasKV } from "@/lib/env";
 
-export type Flags = {
-  email_templates?: boolean;
-  discord_integration?: boolean;
-  tutorials?: boolean;
+const memory = new Map<string, string>();
+
+export const kv = {
+  async get<T = unknown>(key: string): Promise<T | null> {
+    if (hasKV()) {
+      // @ts-ignore types di @vercel/kv accettano any
+      return await vercelKv.get<T>(key);
+    }
+    const raw = memory.get(key);
+    if (raw == null) return null;
+    try { return JSON.parse(raw) as T; } catch { return raw as unknown as T; }
+  },
+
+  async set<T = unknown>(key: string, value: T): Promise<void> {
+    if (hasKV()) {
+      // @ts-ignore
+      await vercelKv.set(key, value);
+      return;
+    }
+    memory.set(key, JSON.stringify(value));
+  },
+
+  async del(key: string): Promise<void> {
+    if (hasKV()) {
+      // @ts-ignore
+      await vercelKv.del(key);
+      return;
+    }
+    memory.delete(key);
+  },
 };
-
-export type DiscordConf = {
-  guildId?: string;
-  channelIds?: string[];
-};
-
-export type Installation = {
-  slug: string;
-  name?: string;
-  flags: Flags;
-  discord: DiscordConf;
-  updatedAt: string;
-};
-
-export const KV = kv;
-
-export async function getInstallation(slug: string): Promise<Installation | null> {
-  return (await KV.get<Installation>(`i:${slug}`)) ?? null;
-}
-
-export async function putInstallation(i: Installation) {
-  i.updatedAt = new Date().toISOString();
-  await KV.set(`i:${i.slug}`, i);
-}
-
-export async function upsertInstallation(slug: string, partial: Partial<Installation>) {
-  const current = (await getInstallation(slug)) ?? { slug, flags: {}, discord: {}, updatedAt: '' };
-  const merged: Installation = {
-    ...current,
-    ...partial,
-    flags: { ...current.flags, ...(partial.flags ?? {}) },
-    discord: { ...current.discord, ...(partial.discord ?? {}) },
-    updatedAt: new Date().toISOString(),
-  };
-  await putInstallation(merged);
-  return merged;
-}
