@@ -12,7 +12,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "paths": {
-    "@/*": ["./*"]
+    "@/*": ["../*"]
     }
   },
   "include": ["app","**/*.ts","**/*.tsx", "lib", "next-env.d.ts"]
