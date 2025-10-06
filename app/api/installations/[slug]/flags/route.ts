@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getInstallation, upsertInstallation } from '@/lib/kv';
 import { verifyRequestSignature } from '@/lib/sign';
+import { notifyPlatformRefresh } from '@/lib/notify';
 
 type Ctx = { params: { slug: string } };
 
@@ -17,5 +18,7 @@ export async function POST(req: Request, { params }: Ctx) {
   const body = await clone.json();
   const flags = body.flags ?? {};
   const updated = await upsertInstallation(params.slug, { flags });
+  // 🔔 notifica Platform (non blocca la response, e se fallisce logga)
++  notifyPlatformRefresh(params.slug).catch(() => {});
   return NextResponse.json({ ok: true, flags: updated.flags, updatedAt: updated.updatedAt });
 }
