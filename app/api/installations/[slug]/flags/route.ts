@@ -19,6 +19,6 @@ export async function POST(req: Request, { params }: Ctx) {
   const flags = body.flags ?? {};
   const updated = await upsertInstallation(params.slug, { flags });
   // 🔔 notifica Platform (non blocca la response, e se fallisce logga)
-+  notifyPlatformRefresh(params.slug).catch(() => {});
+  notifyPlatformRefresh(params.slug).catch(() => {});
   return NextResponse.json({ ok: true, flags: updated.flags, updatedAt: updated.updatedAt });
 }
