@@ -1,35 +1,44 @@
-// lib/kv.ts
-import { kv as vercelKv } from "@vercel/kv";
-import { hasKV } from "@/lib/env";
-
-const memory = new Map<string, string>();
-
-export const kv = {
-  async get<T = unknown>(key: string): Promise<T | null> {
-    if (hasKV()) {
-      // @ts-ignore types di @vercel/kv accettano any
-      return await vercelKv.get<T>(key);
-    }
-    const raw = memory.get(key);
-    if (raw == null) return null;
-    try { return JSON.parse(raw) as T; } catch { return raw as unknown as T; }
-  },
-
-  async set<T = unknown>(key: string, value: T): Promise<void> {
-    if (hasKV()) {
-      // @ts-ignore
-      await vercelKv.set(key, value);
-      return;
-    }
-    memory.set(key, JSON.stringify(value));
-  },
-
-  async del(key: string): Promise<void> {
-    if (hasKV()) {
-      // @ts-ignore
-      await vercelKv.del(key);
-      return;
-    }
-    memory.delete(key);
-  },
+export type Installation = {
+  slug: string;
+  name?: string;
+  flags?: Record<string, any>;
+  discord?: { guildId?: string; channelIds?: string[] };
+  config?: Record<string, any>;
+  updatedAt: number; // epoch ms
 };
+
+// Fallback in-memory. Se hai Redis/KV, sostituisci SOLO dentro get/upsert.
+const mem = new Map<string, Installation>();
+
+function mergeInstall(a: Installation, b: Partial<Installation>): Installation {
+  return {
+    ...a,
+    ...b,
+    flags: { ...(a.flags || {}), ...(b.flags || {}) },
+    discord: {
+      ...(a.discord || {}),
+      ...(b.discord || {}),
+      channelIds: b.discord?.channelIds ?? a.discord?.channelIds,
+    },
+    config: { ...(a.config || {}), ...(b.config || {}) },
+    updatedAt: Date.now(),
+  };
+}
+
+export async function getInstallation(slug: string): Promise<Installation | null> {
+  const s = String(slug || "").trim();
+  if (!s) return null;
+  return mem.get(s) || null;
+}
+
+export async function upsertInstallation(
+  slug: string,
+  patch: Partial<Installation>
+): Promise<Installation> {
+  const s = String(slug || "").trim();
+  if (!s) throw new Error("missing slug");
+  const prev: Installation = mem.get(s) || { slug: s, updatedAt: Date.now() };
+  const next = mergeInstall(prev, patch);
+  mem.set(s, next);
+  return next;
+}
