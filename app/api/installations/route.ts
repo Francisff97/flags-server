@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { upsertInstallation, Installation } from '../../../../../lib/kv';
-import { verifyRequestSignature, verifyBearer } from '../../../../../lib/sign';
-import { kv } from '../../../../../lib/kv';
+import { upsertInstallation, Installation } from '../../lib/kv';
+import { verifyRequestSignature, verifyBearer } from '../../lib/sign';
+import { kv } from '../../lib/kv';
 export async function POST(req: Request) {
   const { ok, raw, clone } = await verifyRequestSignature(req, process.env.FLAGS_HMAC_SECRET);
   if (!ok) return NextResponse.json({ error: 'invalid_signature' }, { status: 401 });
