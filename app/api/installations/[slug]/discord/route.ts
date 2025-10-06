@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getInstallation, upsertInstallation } from '@/lib/kv';
 import { verifyRequestSignature } from '@/lib/sign';
+import { notifyPlatformRefresh } from '@/lib/notify';
 
 type Ctx = { params: { slug: string } };
 
@@ -20,5 +21,6 @@ export async function POST(req: Request, { params }: Ctx) {
     channelIds: Array.isArray(body.channelIds) ? body.channelIds.map(String) : undefined,
   };
   const updated = await upsertInstallation(params.slug, { discord });
+  notifyPlatformRefresh(params.slug).catch(() => {});
   return NextResponse.json({ ok: true, discord: updated.discord, updatedAt: updated.updatedAt });
 }
