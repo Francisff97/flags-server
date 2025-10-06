@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getInstallation } from '../../../../../lib/kv';
+import { getInstallation } from '@/lib/kv';
 
 type Ctx = { params: { slug: string } };
 
