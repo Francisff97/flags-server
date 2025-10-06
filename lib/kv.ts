@@ -10,10 +10,10 @@ export type Installation = {
 };
 
 /**
- * SHIM KV in-memory. Se usi Redis/Vercel KV sostituisci qui dentro:
- *  - get:    return await redis.get(key)
- *  - set:    await redis.set(key, JSON.stringify(value))
- *  - del:    await redis.del(key)
+ * KV in-memory shim:
+ * - get/set/del/keys
+ * - pattern per keys() supporta solo prefisso tipo "i:*"
+ *   (qualsiasi cosa prima di "*" è trattata come prefix)
  */
 const __mem = new Map<string, string>();
 
@@ -24,7 +24,6 @@ export const kv = {
     try {
       return JSON.parse(raw) as T;
     } catch {
-      // se hai salvato plain string
       return raw as unknown as T;
     }
   },
@@ -37,10 +36,24 @@ export const kv = {
   async del(key: string): Promise<void> {
     __mem.delete(key);
   },
+
+  async keys(pattern?: string): Promise<string[]> {
+    const all = Array.from(__mem.keys());
+    if (!pattern) return all;
+    // supporto semplice: "<prefix>*"
+    const star = pattern.indexOf('*');
+    if (star === -1) {
+      // pattern senza wildcard -> match esatto
+      return all.filter((k) => k === pattern);
+    }
+    const prefix = pattern.slice(0, star);
+    return all.filter((k) => k.startsWith(prefix));
+  },
 };
 
-/** Helpers di alto livello (usano kv sotto) */
-const instKey = (slug: string) => `installation:${slug}`;
+// === Helpers di alto livello ===
+// NB: usiamo il PREFISSO "i:" per allinearci alla tua route che fa kv.keys('i:*')
+const instKey = (slug: string) => `i:${String(slug || '').trim()}`;
 
 export async function getInstallation(slug: string): Promise<Installation | null> {
   const s = String(slug || '').trim();
