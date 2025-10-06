@@ -1,4 +1,5 @@
-
+// next.config.js
+const path = require('path');
 
 const nextConfig = {
   experimental: {
