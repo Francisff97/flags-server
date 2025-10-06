@@ -1,6 +1,6 @@
 // lib/sign.ts
 import crypto from "crypto";
-import { env } from "../lib/env";
+import { env } from "@/lib/env";
 
 export function signPayload(payload: unknown): string {
   const body = typeof payload === "string" ? payload : JSON.stringify(payload ?? {});
