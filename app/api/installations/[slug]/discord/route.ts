@@ -1,7 +1,9 @@
+export const runtime = 'nodejs'
 import { NextResponse } from 'next/server';
 import { getInstallation, upsertInstallation } from '@/lib/kv';
 import { verifyRequestSignature } from '@/lib/sign';
 import { notifyPlatformRefresh } from '@/lib/notify';
+
 
 type Ctx = { params: { slug: string } };
 
