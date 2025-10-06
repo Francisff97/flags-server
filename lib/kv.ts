@@ -1,6 +1,6 @@
 // lib/kv.ts
 import { kv as vercelKv } from "@vercel/kv";
-import { hasKV } from "../lib/env";
+import { hasKV } from "@/lib/env";
 
 const memory = new Map<string, string>();
 
