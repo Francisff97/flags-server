@@ -1,3 +1,4 @@
+export const runtime = 'nodejs'
 import { NextResponse } from 'next/server';
 import { getInstallation, upsertInstallation } from '@/lib/kv';
 import { verifyRequestSignature } from '@/lib/sign';
